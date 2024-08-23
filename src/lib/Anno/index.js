@@ -1,4 +1,4 @@
-import { Assets, Sprite, Application, Container } from 'pixi.js'
+import { Assets, Sprite, Application, Container, Point } from 'pixi.js'
 import LabelAnno from './Label'
 
 class Anno {
@@ -15,7 +15,13 @@ class Anno {
     this.domHeight = 0
     this.container = undefined
 
-    this.mode = 'Add' // add
+    // 临时记录坐标用
+    this._temp = {
+      start: { x: 0, y: 0 },
+      end: { x: 0, y: 0 }
+    }
+
+    this.mode = 'NONE' // NONE
   }
 
   async init(dom) {
@@ -32,17 +38,18 @@ class Anno {
       this.container.destroy()
     }
     this.container = new Container({
-      isRenderGroup: true
+      // isRenderGroup: true
     })
 
     this.initEvents()
     const texture = await Assets.load('imgs/test.png')
-    const { width, height } = texture
-    this.imgWidth = width
-    this.imgHeight = height
+    this.imgWidth = texture.width
+    this.imgHeight = texture.height
+
     const sprite = new Sprite(texture)
     this.container.addChild(sprite)
     this.app.stage.addChild(this.container)
+
     const scale = Math.min(this.domWidth / this.imgWidth, this.domHeight / this.imgHeight)
     this.scaleTo(scale)
   }
@@ -52,7 +59,7 @@ class Anno {
     // 根据当前anno的信息，全部更新
     this.labelList = list
     for (var label of this.labelList) {
-      const labelAnno = new LabelAnno(label, this.container)
+      const labelAnno = new LabelAnno(label, this)
       this.annoLabelList.push(labelAnno)
     }
   }
@@ -68,19 +75,117 @@ class Anno {
   // 初始化事件
   initEvents() {
     // 初始化新增框
-    const _this = this
     this.container.eventMode = 'dynamic'
-
-    // this.container.onmousedown = function (event) {
-    //   console.log(...arguments)
-    // }
-    this.container.on('pointerdown', function (event) {
-      console.log(event)
+    this.container.on('mousedown', (event) => {
+      event.originalEvent.preventDefault()
       const { x, y } = event.global
-      // const pointer =
-      console.log(x / _this.scale, y / _this.scale)
+      this._temp.start = { x, y }
+      if (event.originalEvent.altKey) {
+        // 按照alt，则拖动
+        this.onMoveStageStart()
+      } else {
+        this.onSelectLabel({ x, y })
+      }
     })
+
+    this.container.on('mousemove', (event) => {
+      const _this = this
+      event.originalEvent.preventDefault()
+      const { x, y } = event.global
+      if (this.mode === 'DRAG') {
+        _this.onMoveStageMove({ x, y })
+      } else if (this.mode === 'SELECT') {
+        this.onMoveAnnoLabel(event)
+      }
+
+    })
+
+    this.container.on('mouseup', (event) => {
+      const { x, y } = event.global
+      this._temp.end = { x, y }
+
+      if (this.mode === 'DRAG') {
+        this.onMoveStageEnd()
+      } else if (this.mode === 'SELECT') {
+        this.onMoveAnnoLabelEnd(event)
+      }
+    })
+
   }
+
+
+
+  // 新增标签框
+  onAddLabelStart() {
+
+  }
+  // 新增标签框
+  onAddLabelEnd() {
+
+  }
+
+  changeMode(val) {
+    this.mode = val
+  }
+  // 放大
+  onZoomIn() {
+    this.scale *= 0.9
+    this.scaleTo(this.scale)
+  }
+  // 缩小
+  onZoomOut() {
+    this.scale *= 1.1
+    this.scaleTo(this.scale)
+  }
+
+  onMoveStageStart() {
+    this.mode = 'DRAG'
+  }
+
+  onMoveStageMove({ x, y }) {
+    this.container.x = this.container.x - this._temp.start.x + x
+    this.container.y = this.container.y - this._temp.start.y + y
+    this._temp.start = { x, y }
+  }
+
+  onMoveStageEnd() {
+    this.container.x = this.container.x - this._temp.start.x + this._temp.end.x
+    this.container.y = this.container.y - this._temp.start.y + this._temp.end.y
+    this.mode = 'NONE'
+  }
+
+  onSelectLabel(pos) {
+    const { x, y } = this.container.toLocal(pos)
+    const point = new Point(x, y);
+    var flag = false
+    for (var annoLabel of this.annoLabelList) {
+      if (!flag && annoLabel.rect.containsPoint(point)) {
+        annoLabel.selected = true
+        flag = true
+        this.mode = 'SELECT'
+      } else {
+        annoLabel.selected = false
+      }
+    }
+  }
+  onMoveAnnoLabel(e) {
+    const find = this.annoLabelList.find((annoLabel) => annoLabel.selected)
+    this._temp.end = { x: e.global.x, y: e.global.y }
+    find.xmin = find.xmin + (this._temp.end.x - this._temp.start.x) / this.scale
+    find.ymin = find.ymin + (this._temp.end.y - this._temp.start.y) / this.scale
+    this._temp.start = { x: e.global.x, y: e.global.y }
+    find.draw()
+  }
+
+  onMoveAnnoLabelEnd(e) {
+    const find = this.annoLabelList.find((annoLabel) => annoLabel.selected)
+    this._temp.end = { x: e.global.x, y: e.global.y }
+    find.xmin = find.xmin + (this._temp.end.x - this._temp.start.x) / this.scale
+    find.ymin = find.ymin + (this._temp.end.y - this._temp.start.y) / this.scale
+    find.draw()
+    this.mode = 'NONE'
+  }
+
 }
 
 export default new Anno()
