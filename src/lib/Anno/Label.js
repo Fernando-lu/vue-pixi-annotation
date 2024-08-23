@@ -7,8 +7,8 @@ const colors = {
 export default class LabelAnno {
   constructor(anno, Anno) {
     this.anno = anno
-    const { xmin, ymin, xmax, ymax, desc, id } = anno
-    this.id = id
+    const { xmin, ymin, xmax, ymax, desc } = anno
+    this.id = this.generateUUID()
     this.xmin = xmin
     this.ymin = ymin
     this.desc = desc
@@ -33,6 +33,10 @@ export default class LabelAnno {
     this.draw()
   }
 
+  generateUUID() {
+    return crypto.randomUUID(); // 生成一个随机 UUID
+  }
+
 
   // 根据anno信息绘制
   draw() {
@@ -47,13 +51,24 @@ export default class LabelAnno {
     this.rect.interactive = true
     this.initEvents()
     this.container.addChild(this.rect)
-    console.log('-1233')
   }
 
+
+
   destroy() {
+    // remove by id
+    const index = this.Anno.annoLabelList.findIndex(i => this.id === i.id)
+    if (index !== -1) {
+      this.Anno.annoLabelList.splice(index, 1)
+    }
     this.rect.destroy()
   }
 
   initEvents() {
+
+    this.rect.on('rightclick', () => {
+      this.destroy()
+    })
   }
+
 }

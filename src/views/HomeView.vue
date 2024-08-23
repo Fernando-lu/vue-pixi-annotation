@@ -3,8 +3,9 @@
     hello, this is an annotation platform!
     <br>
 
-    ✅ 1. 按住alt键，点击鼠标可进行拖拽重置图片的位置 <br>
-    ... 2. 按住shift，点击鼠标拖拽，可以新增标注框<br>
+    1. 按住alt键，点击鼠标可进行拖拽重置图片的位置 <br>
+    2. 按住shift，点击鼠标拖拽，可以新增标注框<br>
+    3. 右键删除框
 
     <button @click="zoomOut">放大</button>
     <button @click="zoomIn">缩小</button>

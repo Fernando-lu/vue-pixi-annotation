@@ -32,6 +32,9 @@ class Anno {
     this.domHeight = dom.clientHeight
     await app.init({ background: '#1099bb', resizeTo: dom })
     dom.appendChild(app.canvas)
+    app.view.addEventListener('contextmenu', (event) => {
+      event.preventDefault(); // 阻止默认的右键菜单
+    })
     this.app = app
   }
 
@@ -78,7 +81,9 @@ class Anno {
   initEvents() {
     // 初始化新增框
     this.container.eventMode = 'dynamic'
+
     this.container.on('mousedown', (event) => {
+
       event.originalEvent.preventDefault()
       const { x, y } = event.global
       this._temp.start = { x, y }
