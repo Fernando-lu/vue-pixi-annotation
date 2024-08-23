@@ -21,10 +21,6 @@ export default class LabelAnno {
     this.STROKE_WIDTH = 2
     this.draw()
     this.mode = 'NONE'
-    this._temp = {
-      start: { x: 0, y: 0 },
-      end: { x: 0, y: 0 }
-    }
   }
 
   get selected() {
@@ -51,6 +47,11 @@ export default class LabelAnno {
     this.rect.interactive = true
     this.initEvents()
     this.container.addChild(this.rect)
+    console.log('-1233')
+  }
+
+  destroy() {
+    this.rect.destroy()
   }
 
   initEvents() {

@@ -20,6 +20,8 @@ class Anno {
       start: { x: 0, y: 0 },
       end: { x: 0, y: 0 }
     }
+    // 
+    this._tempAnnoLabel = null
 
     this.mode = 'NONE' // NONE
   }
@@ -83,6 +85,9 @@ class Anno {
       if (event.originalEvent.altKey) {
         // 按照alt，则拖动
         this.onMoveStageStart()
+      } else if (event.originalEvent.shiftKey) {
+        // 按照shift，则新增
+        this.onAddLabelStart(event)
       } else {
         this.onSelectLabel({ x, y })
       }
@@ -94,10 +99,11 @@ class Anno {
       const { x, y } = event.global
       if (this.mode === 'DRAG') {
         _this.onMoveStageMove({ x, y })
+      } else if (this.mode === 'ADD') {
+        this.onAddLabelMove(event)
       } else if (this.mode === 'SELECT') {
         this.onMoveAnnoLabel(event)
       }
-
     })
 
     this.container.on('mouseup', (event) => {
@@ -106,6 +112,8 @@ class Anno {
 
       if (this.mode === 'DRAG') {
         this.onMoveStageEnd()
+      } else if (this.mode === 'ADD') {
+        this.onAddLabelEnd(event)
       } else if (this.mode === 'SELECT') {
         this.onMoveAnnoLabelEnd(event)
       }
@@ -116,17 +124,39 @@ class Anno {
 
 
   // 新增标签框
-  onAddLabelStart() {
+  onAddLabelStart(e) {
+    console.log(this)
+    console.log('start', e.global)
+    const xmin = e.global.x / this.scale
+    const ymin = e.global.y / this.scale
+    this._tempAnnoLabel = new LabelAnno({ xmin: xmin, ymin: ymin, xmax: xmin + 10, ymax: ymin + 10, desc: '红球' }, this)
+    this.mode = 'ADD'
+  }
 
+  onAddLabelMove(e) {
+    const xmax = e.global.x / this.scale
+    const ymax = e.global.y / this.scale
+    this._tempAnnoLabel.width = xmax - this._tempAnnoLabel.xmin
+    this._tempAnnoLabel.height = ymax - this._tempAnnoLabel.ymin
+    this._tempAnnoLabel.draw()
   }
   // 新增标签框
-  onAddLabelEnd() {
+  onAddLabelEnd(e) {
+    const xmax = e.global.x / this.scale
+    const ymax = e.global.y / this.scale
+    this._tempAnnoLabel.width = xmax - this._tempAnnoLabel.xmin
+    this._tempAnnoLabel.height = ymax - this._tempAnnoLabel.ymin
+    this._tempAnnoLabel.draw()
 
+    const { xmin, ymin } = this._tempAnnoLabel
+    const newAnnoLabel = new LabelAnno({ xmin, ymin, xmax, ymax, desc: '红球' }, this)
+    this.annoLabelList.push(newAnnoLabel)
+    this._tempAnnoLabel.destroy()
+
+    this.mode = 'NONE'
   }
 
-  changeMode(val) {
-    this.mode = val
-  }
+
   // 放大
   onZoomIn() {
     this.scale *= 0.9
