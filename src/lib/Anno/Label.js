@@ -1,4 +1,4 @@
-import { Graphics, Point } from 'pixi.js'
+import { Graphics } from 'pixi.js'
 
 const colors = {
   DEFAULT: 0xfeeb77,
@@ -21,6 +21,15 @@ export default class LabelAnno {
     this.STROKE_WIDTH = 2
     this.draw()
     this.mode = 'NONE'
+
+    this.showResize = false
+
+    this._temp = {
+      xmin: 0,
+      ymin: 0,
+      width: 0,
+      height: 0
+    }
   }
 
   get selected() {
@@ -34,9 +43,8 @@ export default class LabelAnno {
   }
 
   generateUUID() {
-    return crypto.randomUUID(); // 生成一个随机 UUID
+    return crypto.randomUUID() // 生成一个随机 UUID
   }
-
 
   // 根据anno信息绘制
   draw() {
@@ -53,11 +61,9 @@ export default class LabelAnno {
     this.container.addChild(this.rect)
   }
 
-
-
   destroy() {
     // remove by id
-    const index = this.Anno.annoLabelList.findIndex(i => this.id === i.id)
+    const index = this.Anno.annoLabelList.findIndex((i) => this.id === i.id)
     if (index !== -1) {
       this.Anno.annoLabelList.splice(index, 1)
     }
@@ -65,10 +71,8 @@ export default class LabelAnno {
   }
 
   initEvents() {
-
     this.rect.on('rightclick', () => {
       this.destroy()
     })
   }
-
 }

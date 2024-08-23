@@ -20,10 +20,14 @@ class Anno {
       start: { x: 0, y: 0 },
       end: { x: 0, y: 0 }
     }
-    // 
+    //
     this._tempAnnoLabel = null
 
     this.mode = 'NONE' // NONE
+  }
+
+  get selectedAnnoLabel() {
+    return this.annoLabelList.find((i) => i.selected)
   }
 
   async init(dom) {
@@ -33,7 +37,7 @@ class Anno {
     await app.init({ background: '#1099bb', resizeTo: dom })
     dom.appendChild(app.canvas)
     app.view.addEventListener('contextmenu', (event) => {
-      event.preventDefault(); // 阻止默认的右键菜单
+      event.preventDefault() // 阻止默认的右键菜单
     })
     this.app = app
   }
@@ -83,7 +87,6 @@ class Anno {
     this.container.eventMode = 'dynamic'
 
     this.container.on('mousedown', (event) => {
-
       event.originalEvent.preventDefault()
       const { x, y } = event.global
       this._temp.start = { x, y }
@@ -93,12 +96,15 @@ class Anno {
       } else if (event.originalEvent.shiftKey) {
         // 按照shift，则新增
         this.onAddLabelStart(event)
+      } else if (this.selectedAnnoLabel?.showResize) {
+        this.onResizeStart()
       } else {
         this.onSelectLabel({ x, y })
       }
     })
 
     this.container.on('mousemove', (event) => {
+      this.setCursorStyle(event)
       const _this = this
       event.originalEvent.preventDefault()
       const { x, y } = event.global
@@ -108,6 +114,8 @@ class Anno {
         this.onAddLabelMove(event)
       } else if (this.mode === 'SELECT') {
         this.onMoveAnnoLabel(event)
+      } else if (this.mode === 'RESIZE') {
+        this.onResizeMove(event)
       }
     })
 
@@ -118,23 +126,42 @@ class Anno {
       if (this.mode === 'DRAG') {
         this.onMoveStageEnd()
       } else if (this.mode === 'ADD') {
-        this.onAddLabelEnd(event)
+        this.onAddLabelEnd()
       } else if (this.mode === 'SELECT') {
-        this.onMoveAnnoLabelEnd(event)
+        this.onMoveAnnoLabelEnd()
+      } else if (this.mode === 'RESIZE') {
+        this.onResizeEnd()
       }
     })
-
   }
 
+  //
+  onResizeStart() {
+    this.mode = 'RESIZE'
+  }
 
+  onResizeMove(e) {
+    const pos = this.container.toLocal(e.global)
+    const xmax = pos.x
+    const ymax = pos.y
+    this.selectedAnnoLabel.width = xmax - this.selectedAnnoLabel.xmin
+    this.selectedAnnoLabel.height = ymax - this.selectedAnnoLabel.ymin
+    this.selectedAnnoLabel.draw()
+  }
+
+  onResizeEnd() {
+    this.selectedAnnoLabel.resizing = false
+    this.mode = 'NONE'
+  }
 
   // 新增标签框
   onAddLabelStart(e) {
-    console.log(this)
-    console.log('start', e.global)
     const xmin = e.global.x / this.scale
     const ymin = e.global.y / this.scale
-    this._tempAnnoLabel = new LabelAnno({ xmin: xmin, ymin: ymin, xmax: xmin + 10, ymax: ymin + 10, desc: '红球' }, this)
+    this._tempAnnoLabel = new LabelAnno(
+      { xmin: xmin, ymin: ymin, xmax: xmin + 10, ymax: ymin + 10, desc: '红球' },
+      this
+    )
     this.mode = 'ADD'
   }
 
@@ -146,21 +173,15 @@ class Anno {
     this._tempAnnoLabel.draw()
   }
   // 新增标签框
-  onAddLabelEnd(e) {
-    const xmax = e.global.x / this.scale
-    const ymax = e.global.y / this.scale
-    this._tempAnnoLabel.width = xmax - this._tempAnnoLabel.xmin
-    this._tempAnnoLabel.height = ymax - this._tempAnnoLabel.ymin
-    this._tempAnnoLabel.draw()
-
-    const { xmin, ymin } = this._tempAnnoLabel
+  onAddLabelEnd() {
+    const { xmin, ymin, width, height } = this._tempAnnoLabel
+    const xmax = xmin + width
+    const ymax = ymin + height
     const newAnnoLabel = new LabelAnno({ xmin, ymin, xmax, ymax, desc: '红球' }, this)
     this.annoLabelList.push(newAnnoLabel)
     this._tempAnnoLabel.destroy()
-
     this.mode = 'NONE'
   }
-
 
   // 放大
   onZoomIn() {
@@ -191,7 +212,7 @@ class Anno {
 
   onSelectLabel(pos) {
     const { x, y } = this.container.toLocal(pos)
-    const point = new Point(x, y);
+    const point = new Point(x, y)
     var flag = false
     for (var annoLabel of this.annoLabelList) {
       if (!flag && annoLabel.rect.containsPoint(point)) {
@@ -204,23 +225,36 @@ class Anno {
     }
   }
   onMoveAnnoLabel(e) {
-    const find = this.annoLabelList.find((annoLabel) => annoLabel.selected)
     this._temp.end = { x: e.global.x, y: e.global.y }
-    find.xmin = find.xmin + (this._temp.end.x - this._temp.start.x) / this.scale
-    find.ymin = find.ymin + (this._temp.end.y - this._temp.start.y) / this.scale
+    const { xmin, ymin } = this.selectedAnnoLabel
+    this.selectedAnnoLabel.xmin = xmin + (this._temp.end.x - this._temp.start.x) / this.scale
+    this.selectedAnnoLabel.ymin = ymin + (this._temp.end.y - this._temp.start.y) / this.scale
     this._temp.start = { x: e.global.x, y: e.global.y }
-    find.draw()
+    this.selectedAnnoLabel.draw()
   }
 
-  onMoveAnnoLabelEnd(e) {
-    const find = this.annoLabelList.find((annoLabel) => annoLabel.selected)
-    this._temp.end = { x: e.global.x, y: e.global.y }
-    find.xmin = find.xmin + (this._temp.end.x - this._temp.start.x) / this.scale
-    find.ymin = find.ymin + (this._temp.end.y - this._temp.start.y) / this.scale
-    find.draw()
+  onMoveAnnoLabelEnd() {
     this.mode = 'NONE'
   }
 
+  setCursorStyle(event) {
+    const threshold = 20
+    if (!this.selectedAnnoLabel) {
+      this.app.view.style.cursor = 'default'
+      return
+    }
+    // 判断当前光标是否为附近区域
+    const xmax = this.selectedAnnoLabel.xmin + this.selectedAnnoLabel.width
+    const ymax = this.selectedAnnoLabel.ymin + this.selectedAnnoLabel.height
+    const { x, y } = this.container.toLocal(event.global)
+    if (Math.abs(xmax - x) > threshold || Math.abs(ymax - y) > threshold) {
+      this.app.view.style.cursor = 'default'
+      this.selectedAnnoLabel.showResize = false
+      return
+    }
+    this.app.view.style.cursor = 'se-resize'
+    this.selectedAnnoLabel.showResize = true
+  }
 }
 
 export default new Anno()
