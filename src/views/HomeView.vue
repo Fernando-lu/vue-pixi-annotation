@@ -3,9 +3,14 @@
     hello, this is an annotation platform!
     <br>
 
-    1. 按住alt键，点击鼠标可进行拖拽重置图片的位置 <br>
-    2. 按住shift，点击鼠标拖拽，可以新增标注框<br>
-    3. 右键删除框
+    <div style="font-size: 13px; margin-bottom: 10px;">
+      1. 按住alt键，点击鼠标可进行拖拽重置图片的位置 <br>
+      2. 按住shift，点击鼠标拖拽，可以新增标注框<br>
+      3. 右键删除框<br>
+      4. (代办)修改框大小<br>
+      5. (代办)修改框的描述<br>
+      6. (代办)读取标注框<br>
+    </div>
 
     <button @click="zoomOut">放大</button>
     <button @click="zoomIn">缩小</button>
