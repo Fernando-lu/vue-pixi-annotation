@@ -36,7 +36,7 @@ class Anno {
     this.domHeight = dom.clientHeight
     await app.init({ background: '#1099bb', resizeTo: dom })
     dom.appendChild(app.canvas)
-    app.view.addEventListener('contextmenu', (event) => {
+    app.canvas.addEventListener('contextmenu', (event) => {
       event.preventDefault() // 阻止默认的右键菜单
     })
     this.app = app
@@ -73,12 +73,22 @@ class Anno {
     }
   }
 
+  updateDesc(desc) {
+    if (!this.selectedAnnoLabel) return
+    this.selectedAnnoLabel.desc = desc
+    this.selectedAnnoLabel.draw()
+  }
+
   scaleTo(x) {
     this.scale = x
     this.container.scale = this.scale
     this.annoLabelList.forEach((annoLabel) => {
       annoLabel.draw(x)
     })
+  }
+
+  getAnnoLabelInfo() {
+    return this.annoLabelList.map((i) => i.getAnnoInfo())
   }
 
   // 初始化事件
@@ -104,10 +114,11 @@ class Anno {
     })
 
     this.container.on('mousemove', (event) => {
+      const { x, y } = event.global
       this.setCursorStyle(event)
       const _this = this
       event.originalEvent.preventDefault()
-      const { x, y } = event.global
+
       if (this.mode === 'DRAG') {
         _this.onMoveStageMove({ x, y })
       } else if (this.mode === 'ADD') {
@@ -119,23 +130,9 @@ class Anno {
       }
     })
 
-    this.container.on('mouseup', (event) => {
-      const { x, y } = event.global
-      this._temp.end = { x, y }
-
-      if (this.mode === 'DRAG') {
-        this.onMoveStageEnd()
-      } else if (this.mode === 'ADD') {
-        this.onAddLabelEnd()
-      } else if (this.mode === 'SELECT') {
-        this.onMoveAnnoLabelEnd()
-      } else if (this.mode === 'RESIZE') {
-        this.onResizeEnd()
-      }
-    })
+    this.container.on('mouseup', () => this.triggerMouseUp())
   }
 
-  //
   onResizeStart() {
     this.mode = 'RESIZE'
   }
@@ -150,7 +147,6 @@ class Anno {
   }
 
   onResizeEnd() {
-    this.selectedAnnoLabel.resizing = false
     this.mode = 'NONE'
   }
 
@@ -174,13 +170,21 @@ class Anno {
   }
   // 新增标签框
   onAddLabelEnd() {
-    const { xmin, ymin, width, height } = this._tempAnnoLabel
-    const xmax = xmin + width
-    const ymax = ymin + height
-    const newAnnoLabel = new LabelAnno({ xmin, ymin, xmax, ymax, desc: '红球' }, this)
-    this.annoLabelList.push(newAnnoLabel)
-    this._tempAnnoLabel.destroy()
+    this.annoLabelList.push(this._tempAnnoLabel)
+    this._tempAnnoLabel = null
     this.mode = 'NONE'
+  }
+
+  triggerMouseUp() {
+    if (this.mode === 'DRAG') {
+      this.onMoveStageEnd()
+    } else if (this.mode === 'ADD') {
+      this.onAddLabelEnd()
+    } else if (this.mode === 'SELECT') {
+      this.onMoveAnnoLabelEnd()
+    } else if (this.mode === 'RESIZE') {
+      this.onResizeEnd()
+    }
   }
 
   // 放大
@@ -205,8 +209,6 @@ class Anno {
   }
 
   onMoveStageEnd() {
-    this.container.x = this.container.x - this._temp.start.x + this._temp.end.x
-    this.container.y = this.container.y - this._temp.start.y + this._temp.end.y
     this.mode = 'NONE'
   }
 
@@ -240,7 +242,7 @@ class Anno {
   setCursorStyle(event) {
     const threshold = 20
     if (!this.selectedAnnoLabel) {
-      this.app.view.style.cursor = 'default'
+      this.app.canvas.style.cursor = 'default'
       return
     }
     // 判断当前光标是否为附近区域
@@ -248,11 +250,11 @@ class Anno {
     const ymax = this.selectedAnnoLabel.ymin + this.selectedAnnoLabel.height
     const { x, y } = this.container.toLocal(event.global)
     if (Math.abs(xmax - x) > threshold || Math.abs(ymax - y) > threshold) {
-      this.app.view.style.cursor = 'default'
+      this.app.canvas.style.cursor = 'default'
       this.selectedAnnoLabel.showResize = false
       return
     }
-    this.app.view.style.cursor = 'se-resize'
+    this.app.canvas.style.cursor = 'se-resize'
     this.selectedAnnoLabel.showResize = true
   }
 }

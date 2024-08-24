@@ -1,20 +1,24 @@
 <template>
   <div>
-    hello, this is an annotation platform!
-    <br />
-
-    <div style="font-size: 13px; margin-bottom: 10px">
-      1. 按住alt键，点击鼠标可进行拖拽重置图片的位置 <br />
-      2. 按住shift，点击鼠标拖拽，可以新增标注框<br />
-      3. 右键删除框<br />
-      4. 修改框大小<br />
-      5. (代办)修改框的描述<br />
-      6. (代办)读取标注框<br />
+    <div style="display: flex">
+      <div style="font-size: 13px; margin-bottom: 10px; width: 300px">
+        hello, this is an annotation platform! <br />
+        1. 按住alt键，点击鼠标可进行拖拽重置图片的位置 <br />
+        2. 按住shift，点击鼠标拖拽，可以新增标注框<br />
+        3. 右键删除框<br />
+        4. 修改框大小<br />
+        5. 修改框的描述<br />
+        6. 读取标注框<br />
+        7. （代办）批量修改标注框的信息<br />
+      </div>
+      <textarea v-model="json" style="flex: 1; margin-left: 20px" rows="10"></textarea>
     </div>
 
     <button @click="zoomOut">放大</button>
     <button @click="zoomIn">缩小</button>
-    <button @click="changeMode('select')">选择</button>
+    <button @click="updateDesc('白细胞')">修改为白细胞</button>
+    <button @click="updateDesc('红细胞')">修改为红细胞</button>
+    <button @click="getJson">提取json</button>
   </div>
 
   <div ref="annoWrapper" class="anno-wrapper"></div>
@@ -42,8 +46,15 @@ function zoomOut() {
   Anno.onZoomOut()
 }
 
-function changeMode(val) {
-  Anno.changeMode(val)
+function updateDesc(val) {
+  Anno.updateDesc(val)
+}
+
+const json = ref('')
+
+function getJson() {
+  const result = Anno.getAnnoLabelInfo()
+  json.value = JSON.stringify(result, null, 2)
 }
 </script>
 

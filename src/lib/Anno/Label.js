@@ -1,11 +1,17 @@
-import { Graphics } from 'pixi.js'
+import { Graphics, Text } from 'pixi.js'
 
 const colors = {
   DEFAULT: 0xfeeb77,
   SELECTED: 0xff0000
 }
 export default class LabelAnno {
+  static STROKE_WIDTH = 2
+  static FONT_SIZE = 12
+
   constructor(anno, Anno) {
+    this.rect = undefined
+    this.text = undefined
+
     this.anno = anno
     const { xmin, ymin, xmax, ymax, desc } = anno
     this.id = this.generateUUID()
@@ -15,13 +21,14 @@ export default class LabelAnno {
     this.width = Math.abs(xmin - xmax)
     this.height = Math.abs(ymax - ymin)
     this._selected = false
-    this.rect = undefined
+
     this.container = Anno.container
     this.Anno = Anno
-    this.STROKE_WIDTH = 2
+
     this.draw()
     this.mode = 'NONE'
 
+    // 考虑把这个属性挪到container处
     this.showResize = false
 
     this._temp = {
@@ -48,17 +55,33 @@ export default class LabelAnno {
 
   // 根据anno信息绘制
   draw() {
-    if (this.rect) {
-      this.rect.destroy()
-    }
+    this.rect?.destroy()
+    this.text?.destroy()
+    this.textBackground?.destroy
+
     const color = this.selected ? colors.SELECTED : colors.DEFAULT
     const graphics = new Graphics()
     this.rect = graphics.rect(this.xmin, this.ymin, this.width, this.height)
-    this.rect.stroke({ width: this.STROKE_WIDTH / this.Anno.scale, color })
+    this.rect.stroke({ width: LabelAnno.STROKE_WIDTH / this.Anno.scale, color })
     this.rect.fill({ color: 0x000000, alpha: 0 })
     this.rect.interactive = true
     this.initEvents()
-    this.container.addChild(this.rect)
+    this.container.addChild(graphics)
+
+    // 添加描述文字
+    this.text = new Text({
+      text: this.desc,
+      style: {
+        fontSize: LabelAnno.FONT_SIZE / this.Anno.scale
+      }
+    })
+    this.text.x = this.xmin
+    this.text.y = this.ymin
+    // 给字体加背景颜色
+    this.textBackground = graphics.rect(this.xmin, this.ymin, this.text.width, this.text.height)
+    this.textBackground.fill({ color: 0xffffff })
+
+    this.container.addChild(this.text)
   }
 
   destroy() {
@@ -67,7 +90,22 @@ export default class LabelAnno {
     if (index !== -1) {
       this.Anno.annoLabelList.splice(index, 1)
     }
-    this.rect.destroy()
+    this.rect?.destroy()
+    this.text?.destroy()
+    this.textBackground?.destroy
+  }
+
+  getAnnoInfo() {
+    const { xmin, ymin, width, height, desc } = this
+    const xmax = xmin + width
+    const ymax = ymin + height
+    return {
+      xmax,
+      ymax,
+      xmin,
+      ymin,
+      desc
+    }
   }
 
   initEvents() {
