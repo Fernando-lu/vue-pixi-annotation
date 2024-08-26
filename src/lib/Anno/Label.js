@@ -14,6 +14,9 @@ export default class LabelAnno {
     this._width = 0
     this._height = 0
     this._selected = false
+    this._xmin = 0
+
+    this.Anno = Anno
 
     this.rect = undefined
     this.text = undefined
@@ -28,7 +31,6 @@ export default class LabelAnno {
     this.height = Math.abs(ymax - ymin)
 
     this.container = Anno.container
-    this.Anno = Anno
 
     this.draw()
     this.mode = 'NONE'
@@ -67,6 +69,36 @@ export default class LabelAnno {
     this._height = Math.max(LabelAnno.MIN_HEIGHT, val)
   }
 
+  get scale() {
+    return this.Anno.scale
+  }
+
+  get xmin() {
+    return this._xmin
+  }
+  set xmin(val) {
+    if (val < 0) {
+      this._xmin = 0
+    } else if (val + this.width >= this.Anno.imgWidth) {
+      this._xmin = this.Anno.imgWidth - this.width
+    } else {
+      this._xmin = val
+    }
+  }
+
+  get ymin() {
+    return this._ymin
+  }
+  set ymin(val) {
+    if (val < 0) {
+      this._ymin = 0
+    } else if (val + this.height >= this.Anno.imgHeight) {
+      this._ymin = this.Anno.imgHeight - this.height
+    } else {
+      this._ymin = val
+    }
+  }
+
   generateUUID() {
     return crypto.randomUUID() // 生成一个随机 UUID
   }
@@ -80,7 +112,7 @@ export default class LabelAnno {
     const color = this.selected ? colors.SELECTED : colors.DEFAULT
     const graphics = new Graphics()
     this.rect = graphics.rect(this.xmin, this.ymin, this.width, this.height)
-    this.rect.stroke({ width: LabelAnno.STROKE_WIDTH / this.Anno.scale, color })
+    this.rect.stroke({ width: LabelAnno.STROKE_WIDTH / this.scale, color })
     this.rect.fill({ color: 0x000000, alpha: 0 })
     this.rect.interactive = true
     this.initEvents()
@@ -90,7 +122,7 @@ export default class LabelAnno {
     this.text = new Text({
       text: this.desc,
       style: {
-        fontSize: LabelAnno.FONT_SIZE / this.Anno.scale
+        fontSize: LabelAnno.FONT_SIZE / this.scale
       }
     })
     this.text.x = this.xmin
