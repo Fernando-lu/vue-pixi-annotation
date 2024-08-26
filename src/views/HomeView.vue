@@ -52,7 +52,7 @@ function updateDesc(val) {
 const json = ref('')
 
 function getJson() {
-  const result = Anno.getAnnoLabelInfo()
+  const result = Anno.getLabelAnnoInfo()
   json.value = JSON.stringify(result, null, 2)
 }
 </script>

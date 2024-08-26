@@ -104,9 +104,9 @@ export default class LabelAnno {
 
   destroy() {
     // remove by id
-    const index = this.Anno.annoLabelList.findIndex((i) => this.id === i.id)
+    const index = this.Anno.labelAnnoList.findIndex((i) => this.id === i.id)
     if (index !== -1) {
-      this.Anno.annoLabelList.splice(index, 1)
+      this.Anno.labelAnnoList.splice(index, 1)
     }
     this.rect?.destroy()
     this.text?.destroy()
