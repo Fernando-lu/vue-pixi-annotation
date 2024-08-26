@@ -7,12 +7,18 @@ const colors = {
 export default class LabelAnno {
   static STROKE_WIDTH = 2
   static FONT_SIZE = 12
+  static MIN_WIDTH = 50
+  static MIN_HEIGHT = 50
 
   constructor(anno, Anno) {
+    this._width = 0
+    this._height = 0
+    this._selected = false
+
     this.rect = undefined
     this.text = undefined
-
     this.anno = anno
+
     const { xmin, ymin, xmax, ymax, desc } = anno
     this.id = this.generateUUID()
     this.xmin = xmin
@@ -20,7 +26,6 @@ export default class LabelAnno {
     this.desc = desc
     this.width = Math.abs(xmin - xmax)
     this.height = Math.abs(ymax - ymin)
-    this._selected = false
 
     this.container = Anno.container
     this.Anno = Anno
@@ -42,11 +47,24 @@ export default class LabelAnno {
   get selected() {
     return this._selected
   }
-
   set selected(value) {
     if (value === this._selected) return
     this._selected = value
     this.draw()
+  }
+
+  get width() {
+    return this._width
+  }
+  set width(val) {
+    this._width = Math.max(LabelAnno.MIN_WIDTH, val)
+  }
+
+  get height() {
+    return this._height
+  }
+  set height(val) {
+    this._height = Math.max(LabelAnno.MIN_HEIGHT, val)
   }
 
   generateUUID() {

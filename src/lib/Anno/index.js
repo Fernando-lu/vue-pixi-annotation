@@ -42,7 +42,7 @@ class Anno {
     this.app = app
   }
 
-  async loadImage() {
+  async loadImage(url) {
     if (this.container) {
       this.container.destroy()
     }
@@ -50,27 +50,27 @@ class Anno {
       // isRenderGroup: true
     })
 
-    this.initEvents()
-    const texture = await Assets.load('imgs/test.png')
+    const texture = await Assets.load(url)
     this.imgWidth = texture.width
     this.imgHeight = texture.height
-
     const sprite = new Sprite(texture)
     this.container.addChild(sprite)
     this.app.stage.addChild(this.container)
-
     const scale = Math.min(this.domWidth / this.imgWidth, this.domHeight / this.imgHeight)
     this.scaleTo(scale)
   }
 
   // 加载标注信息
-  load(list) {
+  async load(img, list) {
+    await this.loadImage(img)
     // 根据当前anno的信息，全部更新
     this.labelList = list
     for (var label of this.labelList) {
       const labelAnno = new LabelAnno(label, this)
       this.annoLabelList.push(labelAnno)
     }
+
+    this.initEvents()
   }
 
   updateDesc(desc) {
@@ -155,7 +155,7 @@ class Anno {
     const xmin = e.global.x / this.scale
     const ymin = e.global.y / this.scale
     this._tempAnnoLabel = new LabelAnno(
-      { xmin: xmin, ymin: ymin, xmax: xmin + 10, ymax: ymin + 10, desc: '红球' },
+      { xmin: xmin, ymin: ymin, xmax: xmin + 10, ymax: ymin + 10, desc: '' },
       this
     )
     this.mode = 'ADD'
@@ -226,6 +226,7 @@ class Anno {
       }
     }
   }
+
   onMoveAnnoLabel(e) {
     this._temp.end = { x: e.global.x, y: e.global.y }
     const { xmin, ymin } = this.selectedAnnoLabel

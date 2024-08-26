@@ -31,12 +31,11 @@ import Anno from '@/lib/Anno'
 const annoWrapper = ref()
 onMounted(async () => {
   Anno.init(annoWrapper.value)
-  await Anno.loadImage()
   const list = [
     { xmin: 300, ymin: 300, xmax: 500, ymax: 500, desc: '红球' },
     { xmin: 600, ymin: 300, xmax: 900, ymax: 500, desc: '红球' }
   ]
-  Anno.load(list)
+  Anno.load('imgs/test.png', list)
 })
 
 function zoomIn() {
