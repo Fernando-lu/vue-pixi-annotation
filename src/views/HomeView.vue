@@ -32,8 +32,20 @@ const annoWrapper = ref()
 onMounted(async () => {
   Anno.init(annoWrapper.value)
   const list = [
-    { xmin: 300, ymin: 300, xmax: 500, ymax: 500, desc: '红球' },
-    { xmin: 600, ymin: 300, xmax: 900, ymax: 500, desc: '红球' }
+    {
+      xmax: 500,
+      ymax: 500,
+      xmin: 300,
+      ymin: 300,
+      desc: '红球'
+    },
+    {
+      xmax: 1562.8709234551065,
+      ymax: 857.7486410333357,
+      xmin: 1236.3709536596996,
+      ymin: 605.730086259008,
+      desc: '红球'
+    }
   ]
   Anno.load('imgs/test.png', list)
 })

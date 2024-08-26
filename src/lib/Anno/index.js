@@ -131,6 +131,7 @@ class Anno {
     })
 
     this.container.on('mouseup', () => this.triggerMouseUp())
+    this.container.on('mouseleave', () => this.triggerMouseUp())
   }
 
   onResizeStart() {
@@ -152,20 +153,20 @@ class Anno {
 
   // 新增标签框
   onAddLabelStart(e) {
-    const xmin = e.global.x / this.scale
-    const ymin = e.global.y / this.scale
+    const point = new Point(e.global)
+    const { x, y } = this.container.toLocal(point.x, point.y)
     this._tempLabelAnno = new LabelAnno(
-      { xmin: xmin, ymin: ymin, xmax: xmin + 10, ymax: ymin + 10, desc: '' },
+      { xmin: x, ymin: y, xmax: x + 10, ymax: y + 10, desc: '' },
       this
     )
     this.mode = 'ADD'
   }
 
   onAddLabelMove(e) {
-    const xmax = e.global.x / this.scale
-    const ymax = e.global.y / this.scale
-    this._tempLabelAnno.width = xmax - this._tempLabelAnno.xmin
-    this._tempLabelAnno.height = ymax - this._tempLabelAnno.ymin
+    const point = new Point(e.global)
+    const { x, y } = this.container.toLocal(point.x, point.y)
+    this._tempLabelAnno.width = x - this._tempLabelAnno.xmin
+    this._tempLabelAnno.height = y - this._tempLabelAnno.ymin
     this._tempLabelAnno.draw()
   }
   // 新增标签框
